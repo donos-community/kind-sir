@@ -9,4 +9,4 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-testkit" % "2.4.4" % "test",
   "org.scalatest" %% "scalatest" % "2.2.6" % "test")
 
-fork in run := true
+fork in run := false
