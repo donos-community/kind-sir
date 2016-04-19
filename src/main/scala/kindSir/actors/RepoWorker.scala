@@ -1,25 +1,45 @@
-package kindSir.actors.repoWorker
+package kindSir.actors
 
 import akka.actor._
-import dispatch.Defaults._
-import dispatch._
+import kindSir.actors.RepoWorker.{SetConfig, StopWithReason}
+import kindSir.gitlab.GitlabAPI
 import kindSir.models._
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
-import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.util.{Failure, Success, Try}
 
-class RepoWorker(project: Project, baseUrl: String, token: String) extends Actor with ActorLogging {
+class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLogging {
+
+  fetchConfig()
+
+  var config: Option[ProjectConf] = None
 
   def receive = {
-    case _ => log.error("Unknown message received")
+    case StopWithReason(reason) =>
+      log.info(s"Stopping because of: $reason")
+      context.stop(self)
+    case SetConfig(conf) =>
+      log.info(s"Config set to: $conf")
+      this.config = Some(conf)
+    case _ =>
+      log.error("Unknown message received")
+  }
+
+  def fetchConfig() = {
+    val actor = self
+    gitlab.projectConfig(project) onComplete {
+      case Success(conf) => actor ! SetConfig(conf)
+      case Failure(exc) => actor ! StopWithReason(s"No Config found. Ignoring ${project.name}")
+    }
   }
 }
 
 object RepoWorker {
-  def props(project: Project, baseUrl: String, token: String) = Props(classOf[RepoWorker], project, baseUrl, token)
+  def props(project: Project, gitlab: GitlabAPI) = Props(classOf[RepoWorker], project, gitlab)
 
-  case object FinishedRepoProcessing
+  case class SetConfig(conf: ProjectConf)
+
+  case class StopWithReason(reson: String)
 
   case class Process(repoId: Int)
 

@@ -1,18 +1,15 @@
 package kindSir.actors
 
 import akka.actor._
+import dispatch.Defaults._
+import kindSir.gitlab._
 import kindSir.models._
-import dispatch._
-import Defaults._
-import kindSir.actors.repoWorker.RepoWorker
-import org.json4s._
-import org.json4s.jackson.JsonMethods._
 
-import scala.util.{Failure, Success}
 import scala.concurrent.duration._
+import scala.util.{Failure, Success}
 
 
-class GroupSupervisor(groupConfig: GroupConfig, baseUrl: String, token: String) extends Actor with ActorLogging {
+class GroupSupervisor(groupConfig: GroupConfig, gitlab: GitlabAPI) extends Actor with ActorLogging {
 
   import GroupSupervisor._
 
@@ -25,9 +22,8 @@ class GroupSupervisor(groupConfig: GroupConfig, baseUrl: String, token: String) 
     case Start =>
       val g = this.group.get
       this.repoWorkers = g.projects map { p =>
-        val child = context.actorOf(RepoWorker.props(p, baseUrl, token))
+        val child = context.actorOf(RepoWorker.props(p, gitlab))
         context.watch(child)
-        child
       }
     case SetGroup(g) =>
       this.group = Some(g)
@@ -43,10 +39,9 @@ class GroupSupervisor(groupConfig: GroupConfig, baseUrl: String, token: String) 
   }
 
   def fetchGroupId(name: String) = {
-    val groupsUrl = url(s"$baseUrl/api/v3/groups/${groupConfig.name}?private_token=$token")
     val capturedSelf = self
-    Http(groupsUrl OK as.String) onComplete {
-      case Success(string) => capturedSelf ! SetGroup(Group.parse(parse(string)).get)
+    gitlab.group(groupConfig.name) onComplete {
+      case Success(g) => capturedSelf ! SetGroup(g)
       case Failure(error) => throw error
     }
   }
@@ -59,6 +54,6 @@ object GroupSupervisor {
 
   case class SetGroup(group: Group)
 
-  def props(group: GroupConfig, baseUrl: String, token: String) =
-    Props(classOf[GroupSupervisor], group, baseUrl, token)
+  def props(group: GroupConfig, gitlab: GitlabAPI) =
+    Props(classOf[GroupSupervisor], group, gitlab)
 }
