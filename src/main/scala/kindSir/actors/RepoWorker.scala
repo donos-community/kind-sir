@@ -58,8 +58,8 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
         log.debug(s"Result of merge accept: $list")
         actor ! StopWithReason("Everything merged")
       case Failure(exc) =>
-        log.error("Merge failed with exception")
-        throw exc
+        log.error(s"Merge failed with exception: $exc")
+        actor ! StopWithReason(s"Unable to merge request for project: ${project.name}")
     }
   }
 }

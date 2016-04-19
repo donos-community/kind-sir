@@ -31,7 +31,9 @@ trait GitlabAPI {
   }
 
   def fetchMergeRequests(project: Project): Future[List[MergeRequest]] = {
-    val requestsUrl = url(s"$baseUrl/api/v3/projects/${project.id}/merge_requests?status=open&private_token=$token")
+    val requestsUrl = url(s"$baseUrl/api/v3/projects/${project.id}/merge_requests?state=opened")
+      .addHeader("PRIVATE-TOKEN", token)
+
     Http(requestsUrl OK as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => MergeRequest.parseList(list).get
@@ -41,7 +43,9 @@ trait GitlabAPI {
   }
 
   def acceptMergeRequest(request: MergeRequest): Future[String] = {
-    val acceptUrl = url(s"$baseUrl/api/v3/projects/${request.projectId}/merge_request/${request.id}/merge").PUT
+    val acceptUrl = url(s"$baseUrl/api/v3/projects/${request.projectId}/merge_request/${request.id}/merge")
+        .addHeader("PRIVATE-TOKEN", token)
+        .PUT
     Http(acceptUrl OK as.String)
   }
 
