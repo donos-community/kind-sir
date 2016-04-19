@@ -1,7 +1,6 @@
 package kindSir.main
 
 import akka.actor.ActorSystem
-import kindSir.actors.ConfigSupervisor.FetchGroups
 import kindSir.actors._
 
 import scala.concurrent.Await
