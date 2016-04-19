@@ -1,12 +1,12 @@
 package kindSir.actors
 
 import akka.actor._
-import kindSir.actors.RepoWorker.{ProcessRequests, SetConfig, StopWithReason}
+import kindSir.actors.RepoWorker.{ProcessRequests, SetConfig, Stop}
 import kindSir.gitlab.GitlabAPI
 import kindSir.models._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLogging {
 
@@ -16,7 +16,7 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
     case ProcessRequests(requests) =>
       log.debug(s"Processing requests: $requests")
       acceptRequests(requests)
-    case StopWithReason(reason) =>
+    case Stop(reason) =>
       log.info(s"Stopping because of: $reason")
       context.stop(self)
     case SetConfig(conf) =>
@@ -30,7 +30,7 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
     val actor = self
     gitlab.projectConfig(project) onComplete {
       case Success(conf) => actor ! SetConfig(conf)
-      case Failure(exc) => actor ! StopWithReason(s"No Config found. Ignoring ${project.name}")
+      case Failure(exc) => actor ! Stop(s"No Config found. Ignoring ${project.name}")
     }
   }
 
@@ -44,7 +44,7 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
         if (readyForMerge.nonEmpty) {
           actor ! ProcessRequests(readyForMerge)
         } else {
-          actor ! StopWithReason(s"No requests to be processed for ${project.name}")
+          actor ! Stop(s"No requests to be processed for ${project.name}")
         }
       case Failure(exc) =>
         throw exc
@@ -56,10 +56,10 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
     gitlab.acceptMergeRequests(requests) onComplete {
       case Success(list) =>
         log.debug(s"Result of merge accept: $list")
-        actor ! StopWithReason("Everything merged")
+        actor ! Stop("Everything merged")
       case Failure(exc) =>
         log.error(s"Merge failed with exception: $exc")
-        actor ! StopWithReason(s"Unable to merge request for project: ${project.name}")
+        actor ! Stop(s"Unable to merge request for project: ${project.name}")
     }
   }
 }
@@ -71,8 +71,6 @@ object RepoWorker {
 
   case class ProcessRequests(requests: List[MergeRequest])
 
-  case class StopWithReason(reson: String)
-
-  case class Process(repoId: Int)
+  case class Stop(reason: String)
 
 }

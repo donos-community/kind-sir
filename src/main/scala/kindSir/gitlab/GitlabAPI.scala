@@ -1,6 +1,7 @@
 package kindSir.gitlab
 
-import dispatch._, Defaults._
+import dispatch.Defaults._
+import dispatch._
 import kindSir.models._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._

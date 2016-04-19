@@ -1,7 +1,7 @@
 package kindSir.models
 
-import org.json4s._
 import org.json4s.JsonAST.JValue
+import org.json4s._
 
 import scala.util.Try
 

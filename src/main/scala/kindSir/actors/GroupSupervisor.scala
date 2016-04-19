@@ -14,17 +14,14 @@ class GroupSupervisor(groupConfig: GroupConfig, gitlab: GitlabAPI) extends Actor
   import GroupSupervisor._
 
   var group: Option[Group] = None
-  var repoWorkers: List[ActorRef] = List()
 
-  fetchGroupId(groupConfig.name)
+  fetchGroup(groupConfig.name)
 
   def receive = {
-    case Start =>
-      val g = this.group.get
-      this.repoWorkers = g.projects map { p =>
-        val child = context.actorOf(RepoWorker.props(p, gitlab))
-        context.watch(child)
-      }
+    case Start => this.group.get.projects.foreach { p =>
+      val child = context.actorOf(RepoWorker.props(p, gitlab))
+      context.watch(child)
+    }
     case SetGroup(g) =>
       this.group = Some(g)
       log.debug(s"Group set to: ${this.group}")
@@ -38,7 +35,7 @@ class GroupSupervisor(groupConfig: GroupConfig, gitlab: GitlabAPI) extends Actor
       log.error(s"Unknown message $msg")
   }
 
-  def fetchGroupId(name: String) = {
+  def fetchGroup(name: String) = {
     val actor = self
     gitlab.group(groupConfig.name) onComplete {
       case Success(g) => actor ! SetGroup(g)
