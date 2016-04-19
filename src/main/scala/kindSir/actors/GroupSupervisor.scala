@@ -39,9 +39,9 @@ class GroupSupervisor(groupConfig: GroupConfig, gitlab: GitlabAPI) extends Actor
   }
 
   def fetchGroupId(name: String) = {
-    val capturedSelf = self
+    val actor = self
     gitlab.group(groupConfig.name) onComplete {
-      case Success(g) => capturedSelf ! SetGroup(g)
+      case Success(g) => actor ! SetGroup(g)
       case Failure(error) => throw error
     }
   }
