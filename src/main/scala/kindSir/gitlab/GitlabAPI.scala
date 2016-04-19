@@ -29,7 +29,26 @@ trait GitlabAPI {
       Http(confUrl OK as.String) map { str => ProjectConf.parse(parse(str)).get }
     }
   }
+
+  def fetchMergeRequests(project: Project): Future[List[MergeRequest]] = {
+    val requestsUrl = url(s"$baseUrl/api/v3/projects/${project.id}/merge_requests?status=open&private_token=$token")
+    Http(requestsUrl OK as.String) map { str =>
+      parse(str) match {
+        case list@JArray(_) => MergeRequest.parseList(list).get
+        case _ => throw new RuntimeException(s"No merge requests for project ${project.name} found")
+      }
+    }
+  }
+
+  def acceptMergeRequest(request: MergeRequest): Future[String] = {
+    val acceptUrl = url(s"$baseUrl/api/v3/projects/${request.projectId}/merge_request/${request.id}/merge").PUT
+    Http(acceptUrl OK as.String)
+  }
+
+  def acceptMergeRequests(requests: List[MergeRequest]) = Future.sequence(requests.map(acceptMergeRequest(_)))
 }
+
+
 
 case class Gitlab(url: String, tok: String) extends GitlabAPI {
   var baseUrl = url

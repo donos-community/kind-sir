@@ -27,15 +27,15 @@ class GroupSupervisor(groupConfig: GroupConfig, gitlab: GitlabAPI) extends Actor
       }
     case SetGroup(g) =>
       this.group = Some(g)
-      log.info(s"Group set to: ${this.group}")
-      val capturedSelf = self
+      log.debug(s"Group set to: ${this.group}")
+      val actor = self
       context.system.scheduler.schedule(0.seconds, 60.seconds) {
-        capturedSelf ! Start
+        actor ! Start
       }
     case Terminated(child) =>
-      log.info(s"Child $child was terminated")
+      log.debug(s"Child $child was terminated")
     case msg =>
-      log.info(s"Unknown message $msg")
+      log.error(s"Unknown message $msg")
   }
 
   def fetchGroupId(name: String) = {
@@ -54,6 +54,5 @@ object GroupSupervisor {
 
   case class SetGroup(group: Group)
 
-  def props(group: GroupConfig, gitlab: GitlabAPI) =
-    Props(classOf[GroupSupervisor], group, gitlab)
+  def props(group: GroupConfig, gitlab: GitlabAPI) = Props(classOf[GroupSupervisor], group, gitlab)
 }
