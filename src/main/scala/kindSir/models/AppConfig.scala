@@ -2,7 +2,6 @@ package kindSir.models
 
 import com.typesafe.config.ConfigFactory
 
-import scala.collection.JavaConversions._
 import scala.util.Try
 
 case class GroupConfig(name: String)
@@ -16,13 +15,11 @@ object AppConfig {
     val conf = ConfigFactory.load().getConfig("kindSir")
     val baseUrl = Option(conf.getString("gitlab-url"))
     val token = Option(conf.getString("gitlab-token"))
-    val groups = Option(conf.getStringList("groups").toList)
 
     val config = for {
       url <- baseUrl
       t <- token
-      gs <- groups
-    } yield AppConfig(url, t, gs.map(GroupConfig(_)))
+    } yield AppConfig(url, t, List())
 
     Try(config.get)
   }

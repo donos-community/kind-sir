@@ -11,6 +11,16 @@ trait GitlabAPI {
   var baseUrl: String
   var token: String
 
+  def groups(): Future[List[Group]] = {
+    val all = url(s"$baseUrl/api/v3/groups/?private_token=$token")
+    Http(all OK as.String) map { str =>
+      parse(str) match {
+        case list@JArray(_) => Group.parseList(list).get
+        case _ => throw new RuntimeException("No groups found")
+      }
+    }
+  }
+
   def group(groupName: String): Future[Group] = {
     val groupsUrl = url(s"$baseUrl/api/v3/groups/$groupName?private_token=$token")
     Http(groupsUrl OK as.String) map {string => Group.parse(parse(string)).get }

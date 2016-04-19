@@ -13,5 +13,8 @@ case class Group(id: Int, name: String, path: String, description: String, proje
 
 object Group {
   implicit val formats = DefaultFormats
+
+  def parseList(json: JArray): Try[List[Group]] = Try(json.camelizeKeys.extract[List[Group]])
+
   def parse(json: JValue): Try[Group] = Try(json.camelizeKeys.extract[Group])
 }
