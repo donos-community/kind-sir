@@ -41,7 +41,7 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
         val readyForMerge = requests.filter { req =>
           req.upvotes >= conf.upvotesThreshold && (if (conf.vetoEnabled) req.downvotes == 0 else true)
         }
-        if (readyForMerge .nonEmpty) {
+        if (readyForMerge.nonEmpty) {
           actor ! ProcessRequests(readyForMerge)
         } else {
           actor ! StopWithReason(s"No requests to be processed for ${project.name}")
