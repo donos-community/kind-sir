@@ -8,8 +8,8 @@ import org.json4s.jackson.JsonMethods._
 
 trait GitlabAPI {
 
-  var baseUrl: String
-  var token: String
+  val baseUrl: String
+  val token: String
 
   def groups(): Future[List[Group]] = {
     val all = url(s"$baseUrl/api/v3/groups/?private_token=$token")
@@ -65,7 +65,4 @@ trait GitlabAPI {
 
 
 
-case class Gitlab(url: String, tok: String) extends GitlabAPI {
-  var baseUrl = url
-  var token = tok
-}
+case class Gitlab(val baseUrl: String, val token: String) extends GitlabAPI
