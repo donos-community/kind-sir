@@ -65,4 +65,4 @@ trait GitlabAPI {
 
 
 
-case class Gitlab(val baseUrl: String, val token: String) extends GitlabAPI
+case class Gitlab(baseUrl: String, token: String) extends GitlabAPI
