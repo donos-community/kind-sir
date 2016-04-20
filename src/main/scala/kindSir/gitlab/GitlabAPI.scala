@@ -11,8 +11,24 @@ trait GitlabAPI {
   val baseUrl: String
   val token: String
 
+  def groups(): Future[List[Group]]
+  def group(groupName: String): Future[Group]
+  def projectConfig(project: Project): Future[ProjectConf]
+  def fetchMergeRequests(project: Project): Future[List[MergeRequest]]
+  def acceptMergeRequest(request: MergeRequest): Future[String]
+
+  def acceptMergeRequests(requests: List[MergeRequest]) = Future.sequence(requests.map(acceptMergeRequest(_)))
+}
+
+
+case class Gitlab(baseUrl: String, token: String) extends GitlabAPI {
+
+  private def api(apiHandle: String): Req = {
+    url(s"$baseUrl$apiHandle").addHeader("PRIVATE-TOKEN", token)
+  }
+
   def groups(): Future[List[Group]] = {
-    val all = url(s"$baseUrl/api/v3/groups/?private_token=$token")
+    val all = api("/api/v3/groups/")
     Http(all OK as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => Group.parseList(list).get
@@ -22,12 +38,12 @@ trait GitlabAPI {
   }
 
   def group(groupName: String): Future[Group] = {
-    val groupsUrl = url(s"$baseUrl/api/v3/groups/$groupName?private_token=$token")
-    Http(groupsUrl OK as.String) map {string => Group.parse(parse(string)).get }
+    val groupsUrl = api(s"/api/v3/groups/$groupName")
+    Http(groupsUrl OK as.String) map { string => Group.parse(parse(string)).get }
   }
 
   def projectConfig(project: Project): Future[ProjectConf] = {
-    val treeUrl = url(s"$baseUrl/api/v3/projects/${project.id}/repository/tree?private_token=$token")
+    val treeUrl = api(s"/api/v3/projects/${project.id}/repository/tree")
     Http(treeUrl OK as.String) map { string =>
       parse(string) match {
         case list@JArray(_) => File.parseList(list).get
@@ -36,15 +52,13 @@ trait GitlabAPI {
     } map { files =>
       files.filter(_.name equalsIgnoreCase ".kind_sir.conf").head
     } flatMap { file =>
-      val confUrl = url(s"$baseUrl/api/v3/projects/${project.id}/repository/raw_blobs/${file.id}?private_token=$token")
+      val confUrl = api(s"/api/v3/projects/${project.id}/repository/raw_blobs/${file.id}")
       Http(confUrl OK as.String) map { str => ProjectConf.parse(parse(str)).get }
     }
   }
 
   def fetchMergeRequests(project: Project): Future[List[MergeRequest]] = {
-    val requestsUrl = url(s"$baseUrl/api/v3/projects/${project.id}/merge_requests?state=opened")
-      .addHeader("PRIVATE-TOKEN", token)
-
+    val requestsUrl = api(s"/api/v3/projects/${project.id}/merge_requests?state=opened")
     Http(requestsUrl OK as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => MergeRequest.parseList(list).get
@@ -54,15 +68,7 @@ trait GitlabAPI {
   }
 
   def acceptMergeRequest(request: MergeRequest): Future[String] = {
-    val acceptUrl = url(s"$baseUrl/api/v3/projects/${request.projectId}/merge_request/${request.id}/merge")
-        .addHeader("PRIVATE-TOKEN", token)
-        .PUT
+    val acceptUrl = api(s"/api/v3/projects/${request.projectId}/merge_request/${request.id}/merge").PUT
     Http(acceptUrl OK as.String)
   }
-
-  def acceptMergeRequests(requests: List[MergeRequest]) = Future.sequence(requests.map(acceptMergeRequest(_)))
 }
-
-
-
-case class Gitlab(baseUrl: String, token: String) extends GitlabAPI
