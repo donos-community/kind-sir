@@ -7,16 +7,17 @@ specific number of upvotes during the code review.
 Kind Sir is written in Scala and using Akka library heavily.
 
 # How it works
-Application reads config file and grab from Gitlab API list of
-groups to monitor. For every group will be spawned supervisor actor.
-Once per minute groups supervisor spawns Repo Worker actor for every repository in
+Application reads config file and grabs from Gitlab API list of
+groups to monitor.
+The separate supervisor actor will be spawned for each group.
+Once per minute groups supervisor spawns Repo Worker actor for each repository in
 this group.
 
 Repo worker tries to find `.kind_sir.conf` file in the root of repository.
 If there is no such file, worker will stop and repository will not
 be processed. Otherwise Repo Worker will read this file and grab list of
-opened Merge Requests for repository. After that it will check number of
-upvotes and downvotes for every merge request and if request have
+opened Merge Requests from repository. After that it will check number of
+upvotes and downvotes for every merge request. And if request has
 enought upvotes and satisfy Veto settings, Repo Worker will try to
 merge it.
 
@@ -35,15 +36,15 @@ from `target/scala-2.11/` directory
 
 ## Configuration
 
-Kind Sir using two kinds of configuration files:
+Kind Sir uses two kinds of configuration files:
 1. Application configuration file, deployed with kind sir itself
 2. Acceptance policy configuration placed in the root
 of watched repository
 
 ### Application configuration file format
 
-App configuration file is normal [Lightbend Config](https://github.com/typesafehub/config/) file.
-There is only two fields you can specify at server side:
+App configuration file is just a normal [Lightbend Config](https://github.com/typesafehub/config/) file.
+There are only two fields you can specify at server side:
 1. Gitlab URL
 2. Private Token for user on whose behalf Kind Sir will be
 acting.
@@ -64,9 +65,9 @@ java -Dconfig.file=config.conf kind-sir-assembly-0.1.jar`
 
 ### Acceptance policy
 
-In the root of every repository you want to be monitored by Kind Sir
-should be placed policy config file named `.kind_sir.conf`. This is a
-regular JSON file.
+You should place config file named `.kind_sir.conf` in the root of
+every repository you want to be monitored by Kind Sir.
+This is a regular JSON file.
 
 You can find example of this file right in this repository.
 ```
@@ -88,9 +89,9 @@ drwxr-xr-x   4 nsa  staff   136 19 апр 14:56 src
 drwxr-xr-x   8 nsa  staff   272 17 апр 15:54 target
 ```
 
-There is also only two things to specify:
+There are also only two things to specify:
 1. Upvotes threshold after which request should be accepted
-2. Is Veto enabled. If true request will never be accepted if there is
+2. Is Veto enabled. True value means request will never be accepted if there is
 at least one downvote.
 
 Example:
