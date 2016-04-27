@@ -89,7 +89,8 @@ drwxr-xr-x   8 nsa  staff   272 17 апр 15:54 target
 ```
 
 There are also only two things to specify:
-1. Upvotes threshold needed for request to be accepted
+1. If number of upvotes minus number of downvotes exceed specified number,
+request will be merged
 2. "Veto enabled" flag. True value means request will never be accepted if
 there is at least one downvote.
 
@@ -100,6 +101,3 @@ Example:
   "veto_enabled": false
 }
 ```
-
-This means any Merge Request which got two upvotes or more will be
-merged by Kind Sir. Downvotes aren't accounted at all.
