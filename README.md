@@ -1,35 +1,34 @@
 # Kind Sir
 
-Kind Sir is a [Gitlab](https://gitlab.com/) sattelite project.
+Kind Sir is a [Gitlab](https://gitlab.com/) satellite project.
 It allows to automatically accept merge requests which got
 specific number of upvotes during the code review.
 
 Kind Sir is written in Scala and using Akka library heavily.
 
 # How it works
-Application reads config file and grabs from Gitlab API list of
-groups to monitor.
+Application reads config file and grabs a list of groups from Gitlab API to monitor.
 The separate supervisor actor will be spawned for each group.
-Once per minute groups supervisor spawns Repo Worker actor for each repository in
+Once per minute groups' supervisor spawns Repo Worker actor for each repository in
 this group.
 
 Repo worker tries to find `.kind_sir.conf` file in the root of repository.
 If there is no such file, worker will stop and repository will not
-be processed. Otherwise Repo Worker will read this file and grab list of
-opened Merge Requests from repository. After that it will check number of
+be processed. Otherwise Repo Worker will read this file and will grab a list of
+opened Merge Requests from repository. After that it will check the number of
 upvotes and downvotes for every merge request. And if request has
-enought upvotes and satisfy Veto settings, Repo Worker will try to
+enought upvotes and meets the requirements of Veto settings, Repo Worker will try to
 merge it.
 
 ## Installation
 
 - Git clone this repository
-- Run `activator assembly` inside repository directory
+- Run `activator assembly` inside the repository directory
 - Grab `.jar` file produced by the `assembly` command
 from `target/scala-2.11/` directory
-- Deploy this file to target system
+- Deploy this file to the target system
 - Create Gitlab user on behalf of whom Kind Sir will be acting
-- Add this user to any number of groups, you want to be monitored by Kind Sir
+- Add this user to any number of groups, which you want to be monitored by Kind Sir
 - Find `private_token` of this user in Gitlab's profile section
 - Create configuration file described below
 - Run `java -Dconfig.file=<your-config.con> <kind-sir-assembly.jar>`
@@ -37,16 +36,16 @@ from `target/scala-2.11/` directory
 ## Configuration
 
 Kind Sir uses two kinds of configuration files:
-1. Application configuration file, deployed with kind sir itself
+1. Application configuration file, deployed with Kind Sir itself
 2. Acceptance policy configuration placed in the root
-of watched repository
+of monitored repository
 
 ### Application configuration file format
 
 App configuration file is just a normal [Lightbend Config](https://github.com/typesafehub/config/) file.
 There are only two fields you can specify at server side:
 1. Gitlab URL
-2. Private Token for user on whose behalf Kind Sir will be
+2. Private Token for a user on whose behalf Kind Sir will be
 acting.
 
 For example, you create `config.conf` with this content:
@@ -69,7 +68,7 @@ You should place config file named `.kind_sir.conf` in the root of
 every repository you want to be monitored by Kind Sir.
 This is a regular JSON file.
 
-You can find example of this file right in this repository.
+You can find an example of this file right in this repository.
 ```
 $ ls -la
 total 56
@@ -90,9 +89,9 @@ drwxr-xr-x   8 nsa  staff   272 17 апр 15:54 target
 ```
 
 There are also only two things to specify:
-1. Upvotes threshold after which request should be accepted
-2. Is Veto enabled. True value means request will never be accepted if there is
-at least one downvote.
+1. Upvotes threshold needed for request to be accepted
+2. "Veto enabled" flag. True value means request will never be accepted if
+there is at least one downvote.
 
 Example:
 ```
@@ -103,4 +102,4 @@ Example:
 ```
 
 This means any Merge Request which got two upvotes or more will be
-merged by Kind Sir. Downvotes doesn't accounted at all.
+merged by Kind Sir. Downvotes aren't accounted at all.
