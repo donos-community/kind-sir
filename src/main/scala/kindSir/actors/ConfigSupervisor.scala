@@ -3,37 +3,53 @@ package kindSir.actors
 import akka.actor._
 import kindSir.gitlab.{Gitlab, GitlabAPI}
 import kindSir.models._
+import scala.util.{Success, Failure}
+import scala.concurrent.ExecutionContext.Implicits.global
 
-import scala.util.{Failure, Success}
-
-/**
-  * Actor who reading Configuration for groups
-  * and managing groups workers
-  */
 class ConfigSupervisor extends Actor with ActorLogging {
 
+  import ConfigSupervisor._
+
   var config: Option[AppConfig] = None
-  var groupSupervisors: List[ActorRef] = List()
   var gitlab: Option[GitlabAPI] = None
 
   reloadConfig()
-  startGroupSupervisors()
+  fetchGroups()
 
   def receive = {
-    case _ => log.info("Received unknown, don't giving a shit.")
+    case SetGroups(groups) =>
+      this.config = Some(
+        AppConfig(
+          this.config.get.baseUrl,
+          this.config.get.token,
+          groups map { g => GroupConfig(g.path) }))
+      startGroupSupervisors()
+    case msg => log.error(s"Received unknown message: $msg")
   }
 
   def reloadConfig() = {
-    val conf = AppConfig.reload().get
-    this.config = Some(conf)
-    this.gitlab = Some(Gitlab(conf.baseUrl, conf.token))
+    this.config = AppConfig.reload().toOption
+    this.gitlab = Some(Gitlab(this.config.get.baseUrl, this.config.get.token))
   }
 
-  def startGroupSupervisors() = this.groupSupervisors = this.config.get.groups map { g =>
+  def fetchGroups() = {
+    val actor = self
+    this.gitlab.get.groups() onComplete {
+      case Success(groups) =>
+        log.debug("Set groups to: {}", groups)
+        actor ! SetGroups(groups)
+      case Failure(exc) =>
+        log.error(s"No groups found for KindSir: $exc")
+    }
+  }
+
+  def startGroupSupervisors() = this.config.get.groups map { g =>
     context.actorOf(GroupSupervisor.props(g, gitlab.get), g.name)
   }
 }
 
 object ConfigSupervisor {
   val props = Props[ConfigSupervisor]
+
+  case class SetGroups(groups: List[Group])
 }
