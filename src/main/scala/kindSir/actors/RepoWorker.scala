@@ -39,7 +39,7 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
     gitlab.fetchMergeRequests(project) onComplete {
       case Success(requests) =>
         val readyForMerge = requests.filter { req =>
-          req.upvotes >= conf.upvotesThreshold && (if (conf.vetoEnabled) req.downvotes == 0 else true)
+          (req.upvotes - req.downvotes) >= conf.upvotesThreshold && (if (conf.vetoEnabled) req.downvotes == 0 else true)
         }
         if (readyForMerge.nonEmpty) {
           actor ! ProcessRequests(readyForMerge)
