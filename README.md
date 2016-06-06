@@ -59,7 +59,7 @@ kindSir {
 
 After that you can run Kind Sir with command:
 ```
-java -Dconfig.file=config.conf kind-sir-assembly-0.1.jar
+java -Dconfig.file=config.conf -jar kind-sir-assembly-0.1.jar
 ```
 
 ### Acceptance policy
