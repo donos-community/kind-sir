@@ -69,7 +69,7 @@ case class Gitlab(baseUrl: String, token: String) extends GitlabAPI {
 
   def acceptMergeRequest(request: MergeRequest): Future[String] = {
     val acceptUrl = api(
-      s"/api/v3/projects/${request.projectId}/merge_request/${request.id}/merge?should_remove_source_branch=true").PUT
+      s"/api/v3/projects/${request.projectId}/merge_requests/${request.id}/merge?should_remove_source_branch=true").PUT
     Http(acceptUrl OK as.String)
   }
 }

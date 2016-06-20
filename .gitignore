@@ -4,6 +4,7 @@
 ### Scala ###
 *.class
 *.log
+kind_sir.jar
 
 # sbt specific
 .cache
