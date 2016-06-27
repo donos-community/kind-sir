@@ -77,7 +77,7 @@ case class Gitlab(baseUrl: String, token: String) extends GitlabAPI {
 
 
   def fetchLatestBuilds(projectId: Integer): Future[List[Build]] = {
-    val commitsUrl = api(s"/api/v3/projects/$projectId/builds")
+    val commitsUrl = api(s"/api/v3/projects/$projectId/builds?scope=success")
     Http(commitsUrl OK as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => Build.parseList(list).get
