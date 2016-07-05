@@ -16,6 +16,8 @@ trait GitlabAPI {
   def projectConfig(project: Project): Future[ProjectConf]
   def fetchMergeRequests(project: Project): Future[List[MergeRequest]]
   def acceptMergeRequest(request: MergeRequest): Future[String]
+  def fetchCommitsFor(request: MergeRequest): Future[List[Commit]]
+  def fetchLatestBuilds(projectId: Integer): Future[List[Build]]
 
   def acceptMergeRequests(requests: List[MergeRequest]) = Future.sequence(requests.map(acceptMergeRequest(_)))
 }
@@ -69,7 +71,28 @@ case class Gitlab(baseUrl: String, token: String) extends GitlabAPI {
 
   def acceptMergeRequest(request: MergeRequest): Future[String] = {
     val acceptUrl = api(
-      s"/api/v3/projects/${request.projectId}/merge_request/${request.id}/merge?should_remove_source_branch=true").PUT
+      s"/api/v3/projects/${request.projectId}/merge_requests/${request.id}/merge?should_remove_source_branch=true").PUT
     Http(acceptUrl OK as.String)
+  }
+
+
+  def fetchLatestBuilds(projectId: Integer): Future[List[Build]] = {
+    val commitsUrl = api(s"/api/v3/projects/$projectId/builds?scope=success")
+    Http(commitsUrl OK as.String) map { str =>
+      parse(str) match {
+        case list@JArray(_) => Build.parseList(list).get
+        case _ => throw new RuntimeException(s"No build found for project $projectId")
+      }
+    }
+  }
+
+  def fetchCommitsFor(request: MergeRequest): Future[List[Commit]] = {
+    val commitsUrl = api(s"/api/v3/projects/${request.projectId}/merge_requests/${request.id}/commits")
+    Http(commitsUrl OK as.String) map { str =>
+      parse(str) match {
+        case list@JArray(_) => Commit.parseList(list).get
+        case _ => throw new RuntimeException(s"No commits found for merge request ${request.id}")
+      }
+    }
   }
 }

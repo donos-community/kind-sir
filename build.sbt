@@ -1,6 +1,6 @@
 name := """kind-sir"""
 
-version := "0.1"
+version := "0.2"
 
 scalaVersion := "2.11.8"
 
@@ -12,5 +12,8 @@ libraryDependencies ++= Seq(
   "org.json4s" %% "json4s-jackson" % "3.3.0",
   "ch.qos.logback" % "logback-classic" % "1.1.3"
 )
+
+assemblyJarName in assembly := "kind_sir.jar"
+assemblyOutputPath in assembly := new File("./kind_sir.jar")
 
 fork in run := false

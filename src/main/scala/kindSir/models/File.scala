@@ -11,7 +11,9 @@ object File {
 
   implicit val formats = DefaultFormats
 
-  private def transformJson(json: JValue): JValue = json.camelizeKeys.transformField { case ("type", t) => ("elementType", t) }
+  private def transformJson(json: JValue): JValue = json.camelizeKeys.transformField {
+    case ("type", t) => ("elementType", t)
+  }
 
   def parseList(json: JArray): Try[List[File]] = {
     val transformedJson = this.transformJson(json)
