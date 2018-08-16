@@ -53,6 +53,7 @@ For example, let's imagine you created `config.conf`:
 kindSir {
   gitlab-url = "https://gitlab.acme.com"
   gitlab-token = "ex_MT1jP5t1DeSnN4ka9"
+  gitlab-api-version = 4
 }
 ```
 
