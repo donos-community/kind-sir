@@ -31,7 +31,7 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
   }
 
   def groups(): Future[List[Group]] = {
-    val all = api("/api/v${apiVersion}/groups/")
+    val all = api(s"/api/v${apiVersion}/groups/")
     Http(all OK as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => Group.parseList(list).get
