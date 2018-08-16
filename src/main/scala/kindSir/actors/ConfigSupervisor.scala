@@ -22,6 +22,7 @@ class ConfigSupervisor extends Actor with ActorLogging {
         AppConfig(
           this.config.get.baseUrl,
           this.config.get.token,
+          this.config.get.apiVersion,
           groups map { g => GroupConfig(g.path) }))
       startGroupSupervisors()
     case msg => log.error(s"Received unknown message: $msg")
@@ -29,7 +30,7 @@ class ConfigSupervisor extends Actor with ActorLogging {
 
   def reloadConfig() = {
     this.config = AppConfig.reload().toOption
-    this.gitlab = Some(Gitlab(this.config.get.baseUrl, this.config.get.token))
+    this.gitlab = Some(Gitlab(this.config.get.baseUrl, this.config.get.token, this.config.get.apiVersion))
   }
 
   def fetchGroups() = {
