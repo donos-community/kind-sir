@@ -4,7 +4,7 @@ import org.json4s._
 
 import scala.util.Try
 
-case class MergeRequest(id: Int, projectId: Int, upvotes: Int, downvotes: Int)
+case class MergeRequest(id: Int, iid: Int, projectId: Int, upvotes: Int, downvotes: Int)
 
 object MergeRequest {
 
