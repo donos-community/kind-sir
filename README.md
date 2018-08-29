@@ -46,6 +46,11 @@ There are only two fields you can specify here:
 1. Gitlab URL
 2. Private Token for a user on whose behalf Kind Sir will be
 acting.
+3. Gitlab API version. If you don't know your GitLab API version, you can check GitLab version at [https://your.gitlab.domain.name/help] and than choose:
+
+* If GitLab < 9.0, you probably need to choose **3**.
+* If GitLab >= 9.0, you still can use **3**, but **4** is the preferred version to be used. 
+* If GitLab >= 9.5, **4** is only available version at that moment.
 
 For example, let's imagine you created `config.conf`:
 
