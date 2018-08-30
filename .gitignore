@@ -97,4 +97,4 @@ fabric.properties
 ### Intellij Patch ###
 *.iml
 
-dev.conf
+/*.conf

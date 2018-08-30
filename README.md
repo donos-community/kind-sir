@@ -28,7 +28,15 @@ Repo Worker will try to merge it.
 - Add this user to any number of groups, which you want to be monitored by Kind Sir
 - Find `private_token` of this user in Gitlab's profile section
 - Create configuration file described below
-- Run `java -Dconfig.file=<your-config.con> <kind-sir-assembly.jar>`
+- Run `java -Dconfig.file=<your-config.conf> <kind-sir-assembly.jar>`
+
+## Run in docker
+
+- `git clone https://github.com/answr42/kind-sir.git`
+- `cd kind-sir`
+- `touch config.conf` and [fill it](#configuration)
+- `docker build -t kind-sir .`
+- `docker run --name kind-sir -d kind-sir`
 
 ## Configuration
 
