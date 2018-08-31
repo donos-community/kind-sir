@@ -28,7 +28,15 @@ Repo Worker will try to merge it.
 - Add this user to any number of groups, which you want to be monitored by Kind Sir
 - Find `private_token` of this user in Gitlab's profile section
 - Create configuration file described below
-- Run `java -Dconfig.file=<your-config.con> <kind-sir-assembly.jar>`
+- Run `java -Dconfig.file=<your-config.conf> <kind-sir-assembly.jar>`
+
+## Run in docker
+
+- `git clone https://github.com/answr42/kind-sir.git`
+- `cd kind-sir`
+- `touch config.conf` and [fill it](#configuration)
+- `docker build -t kind-sir .`
+- `docker run --name kind-sir -d kind-sir`
 
 ## Configuration
 
@@ -46,6 +54,11 @@ There are only two fields you can specify here:
 1. Gitlab URL
 2. Private Token for a user on whose behalf Kind Sir will be
 acting.
+3. Gitlab API version. If you don't know your GitLab API version, you can check GitLab version at [https://your.gitlab.domain.name/help] and than choose:
+
+* If GitLab < 9.0, you probably need to choose **3**.
+* If GitLab >= 9.0, you still can use **3**, but **4** is the preferred version to be used. 
+* If GitLab >= 9.5, **4** is only available version at that moment.
 
 For example, let's imagine you created `config.conf`:
 
