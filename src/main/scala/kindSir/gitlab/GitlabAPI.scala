@@ -64,7 +64,7 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
   }
 
   def fetchMergeRequests(project: Project): Future[List[MergeRequest]] = {
-    val requestsUrl = api(s"/api/v${apiVersion}/projects/${project.id}/merge_requests?state=opened")
+    val requestsUrl = api(s"/api/v${apiVersion}/projects/${project.id}/merge_requests?state=opened&per_page=1000")
     Http(requestsUrl > as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => MergeRequest.parseList(list).get
