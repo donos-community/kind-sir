@@ -5,6 +5,7 @@ import dispatch._
 import kindSir.models._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import scala.util.{Success, Try}
 
 trait GitlabAPI {
 
@@ -15,7 +16,7 @@ trait GitlabAPI {
   def groups(): Future[List[Group]]
   def group(groupName: String): Future[Group]
   def projectConfig(project: Project): Future[ProjectConf]
-  def fetchMergeRequests(project: Project): Future[List[MergeRequest]]
+  def fetchMergeRequests(project: Project, page: Int = 1): Future[List[MergeRequest]]
   def acceptMergeRequest(request: MergeRequest): Future[String]
   def fetchCommitsFor(request: MergeRequest): Future[List[Commit]]
   def fetchLatestBuilds(projectId: Integer): Future[List[Build]]
@@ -63,11 +64,15 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
     }
   }
 
-  def fetchMergeRequests(project: Project): Future[List[MergeRequest]] = {
-    val requestsUrl = api(s"/api/v${apiVersion}/projects/${project.id}/merge_requests?state=opened&per_page=1000")
-    Http(requestsUrl > as.String) map { str =>
-      parse(str) match {
-        case list@JArray(_) => MergeRequest.parseList(list).get
+  def fetchMergeRequests(project: Project, page: Int = 1): Future[List[MergeRequest]] = {
+    val requestsUrl = url(s"/api/v${apiVersion}/projects/${project.id}/merge_requests?page=${page}&state=opened&per_page=100&wip=yes")
+    Http(requestsUrl).flatMap { res =>
+      (parse(res.getResponseBody), Try(res.getHeader("X-Next-Page").toInt)) match {
+        case (list@JArray(_), Success(nextPage)) =>
+          fetchMergeRequests(project, nextPage).map { nextPageRequests =>
+            MergeRequest.parseList(list).get ++ nextPageRequests
+          }
+        case (list@JArray(_), _) => Future.successful(MergeRequest.parseList(list).get)
         case _ => throw new RuntimeException(s"No merge requests for project ${project.name} found")
       }
     }
