@@ -65,7 +65,7 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
   }
 
   def fetchMergeRequests(project: Project, page: Int = 1): Future[List[MergeRequest]] = {
-    val requestsUrl = url(s"/api/v${apiVersion}/projects/${project.id}/merge_requests?page=${page}&state=opened&per_page=100&wip=no")
+    val requestsUrl = api(s"/api/v${apiVersion}/projects/${project.id}/merge_requests?page=${page}&state=opened&per_page=100&wip=no")
     Http(requestsUrl).flatMap { res =>
       (parse(res.getResponseBody), Try(res.getHeader("X-Next-Page").toInt)) match {
         case (list@JArray(_), Success(nextPage)) =>
