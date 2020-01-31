@@ -5,7 +5,6 @@ import kindSir.gitlab.{Gitlab, GitlabAPI}
 import kindSir.models._
 import scala.util.{Success, Failure}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration._
 
 class ConfigSupervisor extends Actor with ActorLogging {
 
@@ -15,8 +14,7 @@ class ConfigSupervisor extends Actor with ActorLogging {
   var gitlab: Option[GitlabAPI] = None
 
   reloadConfig()
-  val system = ActorSystem("KindSir")
-  system.scheduler.scheduleWithFixedDelay(0.seconds, 1.hour)(() => fetchGroups())
+  fetchGroups()
 
   def receive = {
     case SetGroups(groups) =>
