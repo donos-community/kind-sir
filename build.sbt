@@ -17,5 +17,9 @@ libraryDependencies ++= Seq(
 
 assemblyJarName in assembly := "kind_sir.jar"
 assemblyOutputPath in assembly := new File("./kind_sir.jar")
+assemblyMergeStrategy in assembly := {
+  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
+  case x => MergeStrategy.first
+}
 
 fork in run := false
