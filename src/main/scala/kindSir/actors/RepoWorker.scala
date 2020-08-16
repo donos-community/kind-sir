@@ -29,6 +29,7 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
       config = Some(conf)
       val system = ActorSystem("KindSir")
       system.scheduler.scheduleWithFixedDelay(0.seconds, 60.seconds) { () =>
+        log.info(s"Processing ${project.name}")
         if (conf.ignoreBuildStatus.getOrElse(false))
           fetchMergeRequests(conf)
         else
