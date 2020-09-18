@@ -6,6 +6,7 @@ import kindSir.models._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import scala.util.{Success, Try}
+import java.net.URLEncoder
 
 trait GitlabAPI {
 
@@ -32,7 +33,7 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
   }
 
   def groups(): Future[List[Group]] = {
-    val all = api(s"/api/v$apiVersion/groups/")
+    val all = api(s"/api/v$apiVersion/groups/?per_page=100")
     Http.default(all > as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => Group.parseList(list).get
@@ -42,7 +43,8 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
   }
 
   def group(groupName: String): Future[Group] = {
-    val groupsUrl = api(s"/api/v$apiVersion/groups/$groupName")
+    val groupNameEncoded = URLEncoder.encode(groupName, "UTF-8")
+    val groupsUrl = api(s"/api/v$apiVersion/groups/$groupNameEncoded")
     Http.default(groupsUrl > as.String) map { string => Group.parse(parse(string)).get }
   }
 

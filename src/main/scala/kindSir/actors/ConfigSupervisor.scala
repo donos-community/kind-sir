@@ -23,7 +23,7 @@ class ConfigSupervisor extends Actor with ActorLogging {
           this.config.get.baseUrl,
           this.config.get.token,
           this.config.get.apiVersion,
-          groups map { g => GroupConfig(g.path) }))
+          groups map { g => GroupConfig(g.fullPath) }))
       startGroupSupervisors()
     case msg => log.error(s"Received unknown message: $msg")
   }
@@ -45,7 +45,8 @@ class ConfigSupervisor extends Actor with ActorLogging {
   }
 
   def startGroupSupervisors() = this.config.get.groups map { g =>
-    context.actorOf(GroupSupervisor.props(g, gitlab.get), g.name)
+    val actorName = g.name.replace("/", "_")
+    context.actorOf(GroupSupervisor.props(g, gitlab.get), actorName)
   }
 }
 
