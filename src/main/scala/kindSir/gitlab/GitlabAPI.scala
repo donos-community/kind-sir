@@ -6,6 +6,7 @@ import kindSir.models._
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import scala.util.{Success, Try}
+import java.net.URLEncoder
 
 trait GitlabAPI {
 
@@ -32,8 +33,8 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
   }
 
   def groups(): Future[List[Group]] = {
-    val all = api(s"/api/v${apiVersion}/groups/")
-    Http(all > as.String) map { str =>
+    val all = api(s"/api/v$apiVersion/groups/?per_page=100")
+    Http.default(all > as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => Group.parseList(list).get
         case _ => throw new RuntimeException("No groups found")
@@ -42,13 +43,14 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
   }
 
   def group(groupName: String): Future[Group] = {
-    val groupsUrl = api(s"/api/v${apiVersion}/groups/$groupName")
-    Http(groupsUrl > as.String) map { string => Group.parse(parse(string)).get }
+    val groupNameEncoded = URLEncoder.encode(groupName, "UTF-8")
+    val groupsUrl = api(s"/api/v$apiVersion/groups/$groupNameEncoded")
+    Http.default(groupsUrl > as.String) map { string => Group.parse(parse(string)).get }
   }
 
   def projectConfig(project: Project): Future[ProjectConf] = {
-    val treeUrl = api(s"/api/v${apiVersion}/projects/${project.id}/repository/tree?per_page=1000")
-    Http(treeUrl > as.String) map { string =>
+    val treeUrl = api(s"/api/v$apiVersion/projects/${project.id}/repository/tree?per_page=1000")
+    Http.default(treeUrl > as.String) map { string =>
       parse(string) match {
         case list@JArray(_) => File.parseList(list).get
         case _ => throw new RuntimeException("No projects found")
@@ -57,16 +59,16 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
       files.filter(_.name equalsIgnoreCase ".kind_sir.conf").head
     } flatMap { file =>
       val confUrl = apiVersion match {
-        case 1 | 2 | 3 => api(s"/api/v${apiVersion}/projects/${project.id}/repository/raw_blobs/${file.id}")
-        case _ => api(s"/api/v${apiVersion}/projects/${project.id}/repository/blobs/${file.id}/raw")
+        case 1 | 2 | 3 => api(s"/api/v$apiVersion/projects/${project.id}/repository/raw_blobs/${file.id}")
+        case _ => api(s"/api/v$apiVersion/projects/${project.id}/repository/blobs/${file.id}/raw")
       }
-      Http(confUrl > as.String) map { str => ProjectConf.parse(parse(str)).get }
+      Http.default(confUrl > as.String) map { str => ProjectConf.parse(parse(str)).get }
     }
   }
 
   def fetchMergeRequests(project: Project, page: Int = 1): Future[List[MergeRequest]] = {
-    val requestsUrl = api(s"/api/v${apiVersion}/projects/${project.id}/merge_requests?page=${page}&state=opened&per_page=100&wip=no")
-    Http(requestsUrl).flatMap { res =>
+    val requestsUrl = api(s"/api/v$apiVersion/projects/${project.id}/merge_requests?page=$page&state=opened&per_page=100&wip=no")
+    Http.default(requestsUrl).flatMap { res =>
       (parse(res.getResponseBody), Try(res.getHeader("X-Next-Page").toInt)) match {
         case (list@JArray(_), Success(nextPage)) =>
           fetchMergeRequests(project, nextPage).map { nextPageRequests =>
@@ -80,19 +82,19 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
 
   def acceptMergeRequest(request: MergeRequest): Future[String] = {
     val acceptUrl = apiVersion match {
-      case 1 | 2 | 3 => api(s"/api/v${apiVersion}/projects/${request.projectId}/merge_requests/${request.id}/merge?should_remove_source_branch=true").PUT
-      case _ => api(s"/api/v${apiVersion}/projects/${request.projectId}/merge_requests/${request.iid}/merge?should_remove_source_branch=true").PUT
+      case 1 | 2 | 3 => api(s"/api/v$apiVersion/projects/${request.projectId}/merge_requests/${request.id}/merge?should_remove_source_branch=true").PUT
+      case _ => api(s"/api/v$apiVersion/projects/${request.projectId}/merge_requests/${request.iid}/merge?should_remove_source_branch=true").PUT
     }
-    Http(acceptUrl > as.String)
+    Http.default(acceptUrl > as.String)
   }
 
 
   def fetchLatestBuilds(projectId: Integer): Future[List[Build]] = {
     val commitsUrl = apiVersion match {
-      case 1 | 2 | 3 => api(s"/api/v${apiVersion}/projects/$projectId/builds?scope=success")
-      case _ => api(s"/api/v${apiVersion}/projects/$projectId/jobs?scope=success")
+      case 1 | 2 | 3 => api(s"/api/v$apiVersion/projects/$projectId/builds?scope=success")
+      case _ => api(s"/api/v$apiVersion/projects/$projectId/jobs?scope=success")
     }
-    Http(commitsUrl > as.String) map { str =>
+    Http.default(commitsUrl > as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => Build.parseList(list).get
         case _ => throw new RuntimeException(s"No build found for project $projectId")
@@ -102,10 +104,10 @@ case class Gitlab(baseUrl: String, token: String, apiVersion: Int) extends Gitla
 
   def fetchCommitsFor(request: MergeRequest): Future[List[Commit]] = {
     val commitsUrl = apiVersion match {
-      case 1 | 2 | 3 => api(s"/api/v${apiVersion}/projects/${request.projectId}/merge_requests/${request.id}/commits")
-      case _ => api(s"/api/v${apiVersion}/projects/${request.projectId}/merge_requests/${request.iid}/commits")
+      case 1 | 2 | 3 => api(s"/api/v$apiVersion/projects/${request.projectId}/merge_requests/${request.id}/commits")
+      case _ => api(s"/api/v$apiVersion/projects/${request.projectId}/merge_requests/${request.iid}/commits")
     }
-    Http(commitsUrl > as.String) map { str =>
+    Http.default(commitsUrl > as.String) map { str =>
       parse(str) match {
         case list@JArray(_) => Commit.parseList(list).get
         case _ => throw new RuntimeException(s"No commits found for merge request ${request.id}")

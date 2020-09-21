@@ -27,11 +27,14 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
 
     case SetConfig(conf) =>
       config = Some(conf)
-
-      if (conf.ignoreBuildStatus.getOrElse(false))
-        fetchMergeRequests(conf)
-      else
-        fetchBuilds(project)
+      val system = ActorSystem("KindSir")
+      system.scheduler.scheduleWithFixedDelay(0.seconds, 60.seconds) { () =>
+        log.info(s"Processing ${project.name}")
+        if (conf.ignoreBuildStatus.getOrElse(false))
+          fetchMergeRequests(conf)
+        else
+          fetchBuilds(project)
+      }
 
     case SetBuilds(builds) =>
       latestBuilds = Some(builds)
@@ -44,8 +47,10 @@ class RepoWorker(project: Project, gitlab: GitlabAPI) extends Actor with ActorLo
       acceptRequests(requests)
 
     case Stop(reason) =>
-      log.info(s"Stopping because of: $reason")
-      context.stop(self)
+      if (reason.startsWith("No Config found")) {
+        log.info(s"Stopping because of: $reason")
+        context.stop(self)
+      }
 
     case msg =>
       log.error(s"Unknown message received: $msg")

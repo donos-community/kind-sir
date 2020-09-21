@@ -26,9 +26,7 @@ class GroupSupervisor(groupConfig: GroupConfig, gitlab: GitlabAPI) extends Actor
       this.group = Some(g)
       log.debug(s"Group set to: ${this.group}")
       val actor = self
-      context.system.scheduler.schedule(0.seconds, 60.seconds) {
-        actor ! Start
-      }
+      actor ! Start
     case Terminated(child) =>
       log.debug(s"Child $child was terminated")
     case msg =>

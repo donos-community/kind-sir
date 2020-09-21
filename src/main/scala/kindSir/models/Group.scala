@@ -3,7 +3,7 @@ package kindSir.models
 import org.json4s._
 import scala.util.Try
 
-case class Group(id: Int, name: String, path: String, description: String, projects: List[Project])
+case class Group(id: Int, name: String, fullPath: String, description: String, projects: List[Project])
 
 object Group {
   implicit val formats = DefaultFormats
